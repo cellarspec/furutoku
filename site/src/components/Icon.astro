@@ -1,0 +1,10 @@
+---
+// scripts/icons.mjs の iconSvg() を prepare.mjs 経由でコピーした src/lib/icons.mjs を
+// set:html でインラインSVG描画する。
+import { iconSvg } from '../lib/icons.mjs';
+
+const { name, color = '#0F766E', size = 24, strokeWidth = 1.8 } = Astro.props;
+const svg = iconSvg(name, color, strokeWidth);
+---
+
+<span class="icon" style={`width:${size}px;height:${size}px`} set:html={svg} />

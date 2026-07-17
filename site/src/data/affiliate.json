@@ -1,0 +1,23 @@
+{
+  "note": "各サイトで返礼品を比較検討できます。寄付前に必ず公式ページで最新の寄付額・内容量をご確認ください。",
+  "services": [
+    {
+      "id": "rakuten",
+      "name": "楽天ふるさと納税",
+      "url": "https://event.rakuten.co.jp/furusato/",
+      "affiliate": false
+    },
+    {
+      "id": "satofull",
+      "name": "さとふる",
+      "url": "https://www.satofull.jp/",
+      "affiliate": false
+    },
+    {
+      "id": "furunavi",
+      "name": "ふるなび",
+      "url": "https://furunavi.jp/",
+      "affiliate": false
+    }
+  ]
+}

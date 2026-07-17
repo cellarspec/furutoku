@@ -1,0 +1,138 @@
+---
+// content JSON の slides[] を型別にセマンティックHTML化する。
+// cta 型はここでは扱わない(呼び出し側でスキップし、AffiliateCta に差し替える)。
+import Icon from './Icon.astro';
+
+const { slide, stepOffset = 0 } = Astro.props;
+
+const maxVal = slide.type === 'bars' ? Math.max(...slide.items.map((it) => it.value)) : null;
+---
+
+{slide.type === 'cover' && (
+  <section class="slide slide--cover">
+    <div class="slide__top">
+      {slide.icon && (
+        <span class="icon-chip icon-chip--lg">
+          <Icon name={slide.icon} size={36} />
+        </span>
+      )}
+      {slide.kicker && <span class="badge">{slide.kicker}</span>}
+    </div>
+    <h2 class="slide__title pre-line">{slide.title}</h2>
+    {slide.sub && <p class="slide__sub">{slide.sub}</p>}
+  </section>
+)}
+
+{slide.type === 'list' && (
+  <section class="slide slide--list">
+    <h3 class="slide__heading">
+      {slide.icon && (
+        <span class="icon-chip">
+          <Icon name={slide.icon} />
+        </span>
+      )}
+      <span>{slide.heading}</span>
+    </h3>
+    <ul class="list-cards">
+      {slide.items.map((it) => (
+        <li class="list-card card">
+          <span class="icon-chip">
+            <Icon name={it.icon ?? 'check'} />
+          </span>
+          <div>
+            <p class="list-card__title">{it.title}</p>
+            {it.body && <p class="list-card__body">{it.body}</p>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+{slide.type === 'steps' && (
+  <section class="slide slide--steps">
+    <h3 class="slide__heading">
+      {slide.icon && (
+        <span class="icon-chip">
+          <Icon name={slide.icon} />
+        </span>
+      )}
+      <span>{slide.heading}</span>
+    </h3>
+    <ol class="steps-list" start={stepOffset + 1}>
+      {slide.items.map((it) => (
+        <li class="steps-item card">
+          <div>
+            <p class="steps-item__title">{it.title}</p>
+            {it.body && <p class="steps-item__body">{it.body}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+)}
+
+{slide.type === 'bars' && (
+  <section class="slide slide--bars">
+    <h3 class="slide__heading">
+      <span class="icon-chip">
+        <Icon name={slide.icon ?? 'chart'} />
+      </span>
+      <span>{slide.heading}</span>
+    </h3>
+    <div class="bar-list">
+      {slide.items.map((it, i) => (
+        <div class={`bar-row${i === 0 ? ' bar-row--top' : ''}`}>
+          <div class="bar-row__label">
+            <span class="bar-row__rank">{i + 1}</span>
+            <span class="bar-row__name">{it.label}</span>
+            <span class="bar-row__value">{it.value}{slide.unit ?? ''}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style={`width:${Math.max(8, Math.round((it.value / maxVal) * 100))}%`} />
+          </div>
+          {it.note && <p class="bar-row__note">{it.note}</p>}
+        </div>
+      ))}
+    </div>
+    {slide.footnote && <p class="slide__footnote">{slide.footnote}</p>}
+  </section>
+)}
+
+{slide.type === 'stat' && (
+  <section class="slide slide--stat">
+    <h3 class="slide__heading">
+      <span class="icon-chip">
+        <Icon name={slide.icon ?? 'yen'} />
+      </span>
+      <span>{slide.heading}</span>
+    </h3>
+    <div class="stat-tiles">
+      {slide.stats.map((t) => (
+        <div class="stat-tile card">
+          <p class="stat-tile__value pre-line">{t.value}</p>
+          <p class="stat-tile__label pre-line">{t.label}</p>
+        </div>
+      ))}
+    </div>
+    {slide.note && <p class="slide__note-text">{slide.note}</p>}
+  </section>
+)}
+
+{slide.type === 'note' && (
+  <section class="slide slide--note">
+    <h3 class="slide__heading">
+      <span class="icon-chip">
+        <Icon name={slide.icon ?? 'alert'} />
+      </span>
+      <span>{slide.heading}</span>
+    </h3>
+    <div class="note-box">
+      <span class="icon-chip icon-chip--white">
+        <Icon name={slide.icon ?? 'alert'} color="#E4572E" />
+      </span>
+      <p class="note-box__body pre-line">{slide.body}</p>
+    </div>
+    {slide.footnote && <p class="slide__footnote">{slide.footnote}</p>}
+  </section>
+)}

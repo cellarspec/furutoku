@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import AffiliateCta from '../components/AffiliateCta.astro';
+import articles from '../data/articles.generated.json';
+
+const latest = articles.slice(0, 6);
+---
+
+<Base
+  title="ふるとく研究室 | ふるさと納税を中立に比較・解説するメディア"
+  description="公式情報を確認したうえで、ふるさと納税の返礼品比較や制度の要点をわかりやすく整理するメディアです。"
+>
+  <section class="hero">
+    <div class="wrap hero__inner">
+      <span class="badge">中立・データ検証型メディア</span>
+      <h1>ふるさと納税を、迷わず選べるように。</h1>
+      <p class="hero__lead">
+        公式サイトの情報を確認したうえで、返礼品の比較や制度の要点を整理してお届けします。まずは仕組みを知ることから始めましょう。
+      </p>
+      <div class="hero__cta">
+        <a class="btn" href="/articles/">記事を読む</a>
+        <a class="btn btn--outline" href="https://www.instagram.com/cellarspec_/" target="_blank" rel="noopener noreferrer">
+          Instagramをフォロー
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2 class="section__heading">最新の記事</h2>
+      <div class="article-grid">
+        {latest.map((a) => <ArticleCard article={a} />)}
+      </div>
+      <div class="section__more">
+        <a class="btn btn--outline" href="/articles/">記事一覧を見る</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap">
+      <AffiliateCta />
+    </div>
+  </section>
+</Base>

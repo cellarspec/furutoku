@@ -1,0 +1,18 @@
+{
+  "name": "furutoku-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ふるとく研究室 — ふるさと納税比較メディア(ブログLP)",
+  "scripts": {
+    "prepare-data": "node scripts/prepare.mjs",
+    "build": "node scripts/prepare.mjs && astro build",
+    "dev": "node scripts/prepare.mjs && astro dev",
+    "preview": "astro preview",
+    "check-site": "node scripts/check-site.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.2.1",
+    "astro": "^5.1.1"
+  }
+}

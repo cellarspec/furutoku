@@ -1,0 +1,16 @@
+---
+const { sources = [] } = Astro.props;
+---
+
+{sources.length > 0 && (
+  <section class="source-list">
+    <h2>出典・参考リンク</h2>
+    <ul>
+      {sources.map((url) => (
+        <li>
+          <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

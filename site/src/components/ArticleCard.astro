@@ -1,0 +1,17 @@
+---
+const { article } = Astro.props;
+const coverImage = `/posts/${article.slug}/01.jpg`;
+const [y, m, d] = article.date.split('-');
+const dateLabel = `${y}年${Number(m)}月${Number(d)}日`;
+---
+
+<a class="article-card card" href={`/articles/${article.slug}/`}>
+  <div class="article-card__image">
+    <img src={coverImage} alt={article.title} loading="lazy" width="480" height="600" />
+    {article.affiliate && <span class="article-card__pr">PR</span>}
+  </div>
+  <div class="article-card__body">
+    <p class="article-card__date">{dateLabel}</p>
+    <h3 class="article-card__title">{article.title}</h3>
+  </div>
+</a>

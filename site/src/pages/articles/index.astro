@@ -1,0 +1,16 @@
+---
+import Base from '../../layouts/Base.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import articles from '../../data/articles.generated.json';
+---
+
+<Base title="記事一覧 | ふるとく研究室" description="ふるさと納税の比較・解説記事の一覧です。">
+  <section class="section">
+    <div class="wrap">
+      <h1 class="page-title">記事一覧</h1>
+      <div class="article-grid">
+        {articles.map((a) => <ArticleCard article={a} />)}
+      </div>
+    </div>
+  </section>
+</Base>

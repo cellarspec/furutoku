@@ -1,0 +1,15 @@
+---
+import Article from '../../layouts/Article.astro';
+import articles from '../../data/articles.generated.json';
+
+export function getStaticPaths() {
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+---
+
+<Article article={article} />

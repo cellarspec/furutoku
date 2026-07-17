@@ -1,0 +1,19 @@
+---
+// ASPリンクは site/src/data/affiliate.json で中央管理。
+// 楽天アフィリエイト等が未登録のうちは通常リンク(非アフィ)で開始し、
+// 登録後は affiliate.json の url を差し替えるだけで全記事に反映される。
+import affiliate from '../data/affiliate.json';
+---
+
+<section class="affiliate-cta card">
+  <h2>返礼品を探す</h2>
+  <p class="affiliate-cta__note">{affiliate.note}</p>
+  <div class="affiliate-cta__buttons">
+    {affiliate.services.map((s) => (
+      <a class="btn btn--orange" href={s.url} target="_blank" rel="noopener noreferrer sponsored">
+        {s.name}で探す
+      </a>
+    ))}
+  </div>
+  <p class="pr-banner">【PR】上記リンクはアフィリエイト広告を含みます。</p>
+</section>

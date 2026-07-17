@@ -1,0 +1,21 @@
+:root {
+  --teal: #0f766e;
+  --teal-dark: #0b5a54;
+  --teal-mark: #0d9488;
+  --teal-pale: #e4f0ee;
+  --orange: #e4572e;
+  --orange-pale: #fbeae3;
+  --bg: #fbf8f3;
+  --ink: #1f2a28;
+  --sub: #6e7671;
+  --card: #ffffff;
+  --line: #e7e1d8;
+
+  --font-sans: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --container-width: 880px;
+}

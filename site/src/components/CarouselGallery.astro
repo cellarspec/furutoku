@@ -1,0 +1,17 @@
+---
+const { slug, imageCount } = Astro.props;
+const images = Array.from({ length: imageCount }, (_, i) => `/posts/${slug}/${String(i + 1).padStart(2, '0')}.jpg`);
+---
+
+<section class="carousel-gallery">
+  <h2>Instagramではこう解説しています</h2>
+  <p class="carousel-gallery__note">
+    <a href="https://www.instagram.com/cellarspec_/" target="_blank" rel="noopener noreferrer">@cellarspec_</a>
+    のカルーセル投稿でも同じ内容を紹介しています。保存してあとで見返すのもおすすめです。
+  </p>
+  <div class="carousel-strip">
+    {images.map((src, i) => (
+      <img src={src} alt={`スライド${i + 1}`} loading="lazy" width="1080" height="1350" />
+    ))}
+  </div>
+</section>

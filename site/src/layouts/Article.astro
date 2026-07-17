@@ -1,0 +1,53 @@
+---
+import Base from './Base.astro';
+import SlideSection from '../components/SlideSection.astro';
+import PrBanner from '../components/PrBanner.astro';
+import CarouselGallery from '../components/CarouselGallery.astro';
+import SourceList from '../components/SourceList.astro';
+import AffiliateCta from '../components/AffiliateCta.astro';
+
+const { article } = Astro.props;
+const cover = article.slides.find((s) => s.type === 'cover');
+const coverImage = `/posts/${article.slug}/01.jpg`;
+const [y, m, d] = article.date.split('-');
+const dateLabel = `${y}年${Number(m)}月${Number(d)}日`;
+
+// steps型の通し番号(複数stepsスライドがある記事向け)
+let stepCounter = 0;
+const stepOffsets = article.slides.map((s) => {
+  if (s.type !== 'steps') return 0;
+  const offset = stepCounter;
+  stepCounter += s.items.length;
+  return offset;
+});
+
+const description = article.caption.replace(/\n+/g, ' ').slice(0, 110);
+---
+
+<Base title={`${article.title} | ふるとく研究室`} description={description} image={coverImage}>
+  <article class="article">
+    <div class="wrap wrap--narrow">
+      <p class="article__date">{dateLabel} 更新</p>
+      <header class="article__hero">
+        {cover?.kicker && <span class="badge">{cover.kicker}</span>}
+        <h1 class="pre-line">{cover?.title ?? article.title}</h1>
+        {cover?.sub && <p class="article__sub">{cover.sub}</p>}
+      </header>
+      <img class="article__cover-image" src={coverImage} alt={article.title} width="1080" height="1350" />
+
+      {article.affiliate && <PrBanner />}
+
+      <p class="article__lead pre-line">{article.caption}</p>
+
+      <div class="article__body">
+        {article.slides.map((s, i) =>
+          s.type !== 'cover' && s.type !== 'cta' ? <SlideSection slide={s} stepOffset={stepOffsets[i]} /> : null,
+        )}
+      </div>
+
+      <CarouselGallery slug={article.slug} imageCount={article.imageCount} />
+      <SourceList sources={article.sources} />
+      <AffiliateCta />
+    </div>
+  </article>
+</Base>
