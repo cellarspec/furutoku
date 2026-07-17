@@ -1,0 +1,64 @@
+{
+  "slug": "furusato-kihon-suuji",
+  "title": "覚えておきたいふるさと納税の数字",
+  "caption": "ふるさと納税、数字で押さえると迷いません🔢\n\n・自己負担は【2,000円】…寄付額からこれを引いた分が控除の対象(上限あり)\n・返礼品は寄付額の【3割】以下…国のルールで決まっています\n・ワンストップ特例は【5自治体】まで…これを超えた年は確定申告に切り替え\n・ワンストップの申請は翌年【1月10日】必着…年末寄付は特に注意\n\nこの4つを覚えておけば、返礼品選びも手続きもぐっとラクになります。\n\n※制度の詳細は総務省ふるさと納税ポータル・寄付先自治体の案内をご確認ください。",
+  "hashtags": [
+    "#ふるさと納税",
+    "#ふるさと納税初心者",
+    "#ふるさと納税デビュー",
+    "#節約",
+    "#節約主婦",
+    "#家計管理",
+    "#家計簿",
+    "#お金の勉強",
+    "#暮らしの知恵",
+    "#主婦の勉強垢"
+  ],
+  "affiliate": false,
+  "sources": [
+    "https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/furusato/mechanism/deduction.html",
+    "https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/furusato/mechanism/procedure.html",
+    "https://www.satofull.jp/static/onestop.php"
+  ],
+  "slides": [
+    {
+      "type": "cover",
+      "kicker": "これだけ覚えればOK",
+      "icon": "yen",
+      "title": "ふるさと納税\n4つの数字",
+      "sub": "返礼品選びと手続きがラクになる基本"
+    },
+    {
+      "type": "stat",
+      "heading": "まず押さえる3つ",
+      "icon": "yen",
+      "stats": [
+        { "value": "2,000円", "label": "自己負担はこれだけ(上限内)" },
+        { "value": "3割", "label": "返礼品は寄付額の3割以下" },
+        { "value": "5自治体", "label": "ワンストップ特例の上限" }
+      ],
+      "note": "自己負担2,000円で済むのは控除上限までです。上限は年収と家族構成で変わります。"
+    },
+    {
+      "type": "stat",
+      "heading": "いちばん大事な締切",
+      "icon": "calendar",
+      "stats": [
+        { "value": "1月10日", "label": "ワンストップ特例の申請は\n翌年1月10日必着" }
+      ],
+      "note": "年末に寄付すると郵送が間に合わないことも。オンライン申請対応の自治体もあります。"
+    },
+    {
+      "type": "note",
+      "heading": "超えると自腹に",
+      "icon": "alert",
+      "body": "上限額を超えた寄付は\n控除されず\nそのまま自己負担",
+      "footnote": "寄付する前に、年収と家族構成に応じた控除上限の目安を必ず確認しましょう。"
+    },
+    {
+      "type": "cta",
+      "title": "上限額の目安は\nプロフィールから",
+      "body": "控除上限の早見表と手続きの流れは、プロフィールのリンクからチェックできます"
+    }
+  ]
+}

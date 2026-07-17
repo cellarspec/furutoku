@@ -59,17 +59,22 @@ check-content.mjs(品質ゲート)→ render.mjs(JPEG化)→ 画像push → post
   "affiliate": false,                  // アフィ誘導ならtrue+captionにPR表記
   "sources": ["https://..."],          // 裏取りに使った一次ソースURL(必須)
   "slides": [                          // 2〜10枚。1枚目=cover、最終=cta 固定
-    { "type": "cover", "kicker": "帯文言(〜20字)", "title": "見出し(1行13字まで・\\nで改行)", "sub": "補足(〜44字)" },
-    { "type": "list",  "heading": "見出し(〜24字)", "items": [{ "title": "〜30字", "body": "〜64字" }] },  // itemsは4件まで
-    { "type": "steps", "heading": "見出し", "items": [{ "title": "手順名", "body": "説明" }] },  // 番号は複数スライドで通し番号
-    { "type": "note",  "heading": "見出し", "body": "強調文(\\n改行可・計90字まで)", "footnote": "注記(〜80字)" },
+    { "type": "cover", "kicker": "帯文言(〜20字)", "icon": "gift", "title": "見出し(1行13字まで・\\nで改行)", "sub": "補足(〜44字)", "image": "任意: assets/photos/xxx.jpg" },
+    { "type": "bars",  "heading": "見出し(〜24字)", "icon": "chart", "unit": "%", "items": [{ "label": "項目名〜20字", "value": 58, "note": "寄付額1万円/2kg等〜32字" }], "footnote": "還元率=市場価格÷寄付額で算出〜70字" },  // items 2〜5件、valueは正の数値。先頭が自動で1位ハイライト
+    { "type": "stat",  "heading": "見出し", "icon": "yen", "stats": [{ "value": "2,000円", "label": "自己負担はこれだけ" }], "note": "補足〜70字" },  // stats 1〜3件。valueは大きな数字(〜10字)
+    { "type": "list",  "heading": "見出し(〜24字)", "icon": "bulb", "items": [{ "title": "〜30字", "icon": "check", "body": "〜64字" }] },  // itemsは4件まで
+    { "type": "steps", "heading": "見出し", "icon": "document", "items": [{ "title": "手順名", "body": "説明" }] },  // 番号は複数スライドで通し番号
+    { "type": "note",  "heading": "見出し", "icon": "alert", "body": "強調文(\\n改行可・計90字まで)", "footnote": "注記(〜80字)" },
     { "type": "cta",   "title": "締め(\\n改行可・計30字)", "body": "プロフィールリンク誘導文(〜90字)" }
   ]
 }
 ```
 
 - 文字数上限はレイアウト崩れ防止のため。超えるとゲートNG。
-- ランキング系は `list` を使い、`title` に「1位 〇〇(△△市)」、`body` に「寄付額◯円/内容量◯kg/根拠」を書く。
+- **ランキング・比較は必ず `bars` を使う**(文字の羅列より保存される)。`label`に返礼品名(短く)、`value`に還元率やコスパの数値、`note`に「寄付額◯円/内容量◯kg」。先頭要素が自動で1位ハイライトになるので**value降順に並べる**。
+- **制度の要点は `stat`** で大きな数字にする(例: 2,000円 / 1月10日 / 5自治体 / 3割)。
+- **icon**(任意)で見出し・カバー・list項目に絵アイコンを付けられる。使用可能な名前: `gift`(返礼品) `document`(申請書) `calendar`(締切) `clock`(期限) `yen`(お金) `percent`(還元率) `check`(OK) `alert`(注意) `house`(家計) `bulb`(ポイント) `wallet`(財布) `chart`(比較) `pin`(産地)。
+- **image**(任意・coverのみ): `assets/photos/` に置いた**商用フリー**画像(Pexels/Pixabay等)のファイル名を指定するとカバー背景に合成できる。private企業サイトの画像は使わない(著作権侵害)。
 
 ## 生成のトーン
 

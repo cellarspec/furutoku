@@ -30,11 +30,24 @@ const LIMITS = {
   noteFootnote: 80,
   ctaTitle: 30,
   ctaBody: 90,
+  barLabel: 20, // 比較バーの項目名(値が右に並ぶため短め)
+  barNote: 32,
+  barsItemsMax: 5,
+  barsFootnote: 70,
+  statValue: 10, // 大きな数字(例: 2,000円 / 1月10日)
+  statLabel: 24,
+  statsMax: 3,
+  statNote: 70,
   caption: 1800, // ハッシュタグと合わせてInstagram上限2200に収める
   hashtags: 25,
   slidesMin: 2, // Instagramカルーセルの最小枚数
   slidesMax: 10,
 };
+
+const ICON_NAMES = new Set([
+  'gift', 'document', 'calendar', 'clock', 'yen', 'percent',
+  'check', 'alert', 'house', 'bulb', 'wallet', 'chart', 'pin',
+]);
 
 // 断定的な利益表示(景表法・広告表現ガイドライン系)
 const NG_PATTERNS = [
@@ -101,12 +114,20 @@ function checkPost(file, post) {
   if (post.slides[0].type !== 'cover') err(file, '1枚目は type=cover にしてください');
   if (post.slides[post.slides.length - 1].type !== 'cta') err(file, '最終枚は type=cta にしてください');
 
+  // アイコン名の妥当性(任意フィールド)
+  const checkIcon = (at, name) => {
+    if (name !== undefined && !ICON_NAMES.has(name)) {
+      err(file, `${at}: 未知のアイコン名 "${name}"(使用可: ${[...ICON_NAMES].join(', ')})`);
+    }
+  };
+
   // --- スライドごと ---
   post.slides.forEach((s, i) => {
     const at = `slides[${i}](${s.type})`;
     switch (s.type) {
       case 'cover':
         if (!s.title) err(file, `${at}: title 必須`);
+        checkIcon(`${at}.icon`, s.icon);
         checkLen(file, `${at}.kicker`, s.kicker, LIMITS.coverKicker);
         checkLen(file, `${at}.title`, (s.title ?? '').replace(/\n/g, ''), LIMITS.coverTitle);
         for (const line of String(s.title ?? '').split('\n')) {
@@ -118,6 +139,7 @@ function checkPost(file, post) {
       case 'list':
       case 'steps':
         if (!s.heading) err(file, `${at}: heading 必須`);
+        checkIcon(`${at}.icon`, s.icon);
         checkLen(file, `${at}.heading`, s.heading, LIMITS.heading);
         if (!Array.isArray(s.items) || s.items.length === 0) {
           err(file, `${at}: items 必須`);
@@ -126,6 +148,7 @@ function checkPost(file, post) {
         if (s.items.length > LIMITS.itemsPerSlide) err(file, `${at}: itemsは${LIMITS.itemsPerSlide}件まで(あふれ防止)`);
         s.items.forEach((it, j) => {
           if (!it.title) err(file, `${at}.items[${j}]: title 必須`);
+          checkIcon(`${at}.items[${j}].icon`, it.icon);
           checkLen(file, `${at}.items[${j}].title`, it.title, LIMITS.itemTitle);
           checkLen(file, `${at}.items[${j}].body`, it.body, LIMITS.itemBody);
           checkSlideText(file, `${at}.items[${j}]`, it.title);
@@ -133,8 +156,53 @@ function checkPost(file, post) {
         });
         checkSlideText(file, at, s.heading);
         break;
+      case 'bars':
+        if (!s.heading) err(file, `${at}: heading 必須`);
+        checkIcon(`${at}.icon`, s.icon);
+        checkLen(file, `${at}.heading`, s.heading, LIMITS.heading);
+        checkLen(file, `${at}.footnote`, s.footnote, LIMITS.barsFootnote);
+        checkSlideText(file, at, s.heading);
+        checkSlideText(file, at, s.footnote);
+        if (!Array.isArray(s.items) || s.items.length < 2) {
+          err(file, `${at}: items は2件以上必要(比較のため)`);
+          break;
+        }
+        if (s.items.length > LIMITS.barsItemsMax) err(file, `${at}: itemsは${LIMITS.barsItemsMax}件まで`);
+        if (s.unit !== undefined && [...String(s.unit)].length > 4) err(file, `${at}.unit は4文字以内`);
+        s.items.forEach((it, j) => {
+          if (!it.label) err(file, `${at}.items[${j}]: label 必須`);
+          if (typeof it.value !== 'number' || !Number.isFinite(it.value) || it.value <= 0) {
+            err(file, `${at}.items[${j}]: value は正の数値が必須`);
+          }
+          checkLen(file, `${at}.items[${j}].label`, it.label, LIMITS.barLabel);
+          checkLen(file, `${at}.items[${j}].note`, it.note, LIMITS.barNote);
+          checkSlideText(file, `${at}.items[${j}]`, it.label);
+          checkSlideText(file, `${at}.items[${j}]`, it.note);
+        });
+        break;
+      case 'stat':
+        if (!s.heading) err(file, `${at}: heading 必須`);
+        checkIcon(`${at}.icon`, s.icon);
+        checkLen(file, `${at}.heading`, s.heading, LIMITS.heading);
+        checkLen(file, `${at}.note`, s.note, LIMITS.statNote);
+        checkSlideText(file, at, s.heading);
+        checkSlideText(file, at, s.note);
+        if (!Array.isArray(s.stats) || s.stats.length === 0) {
+          err(file, `${at}: stats 必須(1〜${LIMITS.statsMax}件)`);
+          break;
+        }
+        if (s.stats.length > LIMITS.statsMax) err(file, `${at}: statsは${LIMITS.statsMax}件まで`);
+        s.stats.forEach((t, j) => {
+          if (!t.value || !t.label) err(file, `${at}.stats[${j}]: value/label 必須`);
+          checkLen(file, `${at}.stats[${j}].value`, t.value, LIMITS.statValue);
+          checkLen(file, `${at}.stats[${j}].label`, t.label, LIMITS.statLabel);
+          checkSlideText(file, `${at}.stats[${j}]`, t.value);
+          checkSlideText(file, `${at}.stats[${j}]`, t.label);
+        });
+        break;
       case 'note':
         if (!s.heading || !s.body) err(file, `${at}: heading/body 必須`);
+        checkIcon(`${at}.icon`, s.icon);
         checkLen(file, `${at}.heading`, s.heading, LIMITS.heading);
         checkLen(file, `${at}.body`, (s.body ?? '').replace(/\n/g, ''), LIMITS.noteBody);
         checkLen(file, `${at}.footnote`, s.footnote, LIMITS.noteFootnote);
