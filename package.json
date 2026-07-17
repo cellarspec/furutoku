@@ -1,0 +1,17 @@
+{
+  "name": "furutoku",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ふるとく研究室 — ふるさと納税比較のInstagramカルーセル自動生成・自動投稿",
+  "scripts": {
+    "check": "node scripts/check-content.mjs",
+    "render": "node scripts/render.mjs",
+    "post": "node scripts/post-instagram.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.12.2",
+    "sharp": "^0.34.2"
+  }
+}

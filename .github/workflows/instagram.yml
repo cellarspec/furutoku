@@ -1,0 +1,121 @@
+# Instagram カルーセル自動投稿(毎日12:00 JST)+ 週1トークンリフレッシュ
+#
+# 順序が重要: Metaは image_url(raw.githubusercontent.com)から画像を取得するため、
+# レンダリング画像を main に push してから投稿する。
+# セットアップ完了前(IG_TOKEN等が未設定)は投稿をスキップして正常終了する。
+name: Instagram
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC = 12:00 JST
+  workflow_dispatch:
+
+concurrency:
+  group: instagram-post
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: 依存インストール
+        run: npm ci
+
+      - name: 品質ゲート
+        run: npm run check
+
+      - name: カルーセル画像レンダリング
+        run: npm run render
+
+      - name: レンダリング画像をコミット&push(投稿前に公開URLを有効化)
+        run: |
+          git config user.name "furutoku-bot"
+          git config user.email "actions@github.com"
+          if git status --porcelain docs/ | grep -q .; then
+            git add docs/
+            git commit -m "render: カルーセル画像を自動生成"
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then break; fi
+              echo "push競合(${i}/3)— リトライ"
+              git pull --rebase origin main
+              sleep 5
+            done
+          else
+            echo "新規レンダリングなし"
+          fi
+
+      - name: Instagramに投稿
+        if: ${{ secrets.IG_TOKEN != '' && secrets.IG_USER_ID != '' }}
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+        run: node scripts/post-instagram.mjs
+
+      - name: セットアップ未完了の通知
+        if: ${{ secrets.IG_TOKEN == '' || secrets.IG_USER_ID == '' }}
+        run: echo "::notice::IG_TOKEN / IG_USER_ID が未設定のため投稿をスキップしました(SETUP.md参照)"
+
+      - name: queueの消化をコミット&push
+        if: ${{ secrets.IG_TOKEN != '' && secrets.IG_USER_ID != '' }}
+        run: |
+          git config user.name "furutoku-bot"
+          git config user.email "actions@github.com"
+          if git status --porcelain content/ | grep -q .; then
+            git add content/
+            git commit -m "queue消化: Instagram自動投稿"
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then exit 0; fi
+              echo "push競合(${i}/3)— リトライ"
+              git pull --rebase origin main
+              sleep 5
+            done
+            echo "::warning::queue更新のpushに3回失敗。次回実行時に重複投稿の可能性があります"
+            exit 1
+          else
+            echo "queue変更なし(投稿スキップまたは失敗)"
+          fi
+
+      # 毎週日曜のみ: 長期ユーザートークンをリフレッシュし、GH_PATがあれば
+      # シークレットを自動更新する。無期限ページトークン運用(SETUP.md推奨)の場合は
+      # FB_APP_ID/FB_APP_SECRET を設定しなければこのステップは何もしない。
+      - name: トークンリフレッシュ(日曜のみ)
+        if: ${{ always() && secrets.IG_TOKEN != '' }}
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          FB_APP_ID: ${{ secrets.FB_APP_ID }}
+          FB_APP_SECRET: ${{ secrets.FB_APP_SECRET }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ "$(date -u +%u)" != "7" ]; then
+            echo "今日は日曜ではないためリフレッシュをスキップ"
+            exit 0
+          fi
+          if [ -z "$FB_APP_ID" ] || [ -z "$FB_APP_SECRET" ]; then
+            echo "FB_APP_ID/FB_APP_SECRET 未設定 — 無期限ページトークン運用とみなしスキップ"
+            exit 0
+          fi
+          if [ -z "$GH_PAT" ]; then
+            echo "::warning::GH_PAT が未設定のため IG_TOKEN の自動更新はできません。長期ユーザートークンは約60日で失効します(SETUP.md参照)。"
+            exit 0
+          fi
+          OUTPUT=$(REFRESH=1 node scripts/post-instagram.mjs)
+          echo "$OUTPUT" | grep -v '^NEW_TOKEN='
+          NEW_TOKEN=$(echo "$OUTPUT" | grep '^NEW_TOKEN=' | cut -d= -f2-)
+          if [ -z "$NEW_TOKEN" ]; then
+            echo "::warning::リフレッシュ結果からトークンを取得できませんでした"
+            exit 1
+          fi
+          echo "$NEW_TOKEN" | GH_TOKEN="$GH_PAT" gh secret set IG_TOKEN --repo "${{ github.repository }}"
+          echo "IG_TOKEN シークレットを更新しました"
