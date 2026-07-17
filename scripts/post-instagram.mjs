@@ -15,9 +15,13 @@
 //   IG_USER_ID       InstagramプロアカウントのユーザーID(数字)
 //   IG_TOKEN         アクセストークン(長期ユーザートークン or 無期限ページトークン推奨)
 //   IMAGE_BASE_URL   画像公開URLのベース(既定: raw.githubusercontent.com の main ブランチ)
+//   IG_API_BASE      APIベースURL(既定: graph.instagram.com = Instagramログイン方式)
 //   DRY_RUN=1        API呼び出しせず、queue先頭の投稿内容と画像URLの検証のみ(トークン不要)
-//   REFRESH=1        投稿せず長期トークンを更新して `NEW_TOKEN=...` を出力
-//                    (FB_APP_ID / FB_APP_SECRET が必要。無期限ページトークン運用なら不要)
+//   REFRESH=1        投稿せず長期トークン(60日)を更新して `NEW_TOKEN=...` を出力
+//                    (Instagramログイン方式は ig_refresh_token。アプリシークレット不要)
+//
+// 前提: 「Instagram API with Instagram Login」方式(Facebookページ不要)。
+//       IG_TOKEN は Instagramユーザーの長期アクセストークン、IG_USER_ID は /me の user_id。
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -26,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const QUEUE_DIR = join(ROOT, 'content/queue');
 const POSTED_DIR = join(ROOT, 'content/posted');
-const API_BASE = 'https://graph.facebook.com/v23.0';
+const API_BASE = process.env.IG_API_BASE ?? 'https://graph.instagram.com/v23.0';
 const IMAGE_BASE_URL =
   process.env.IMAGE_BASE_URL ?? 'https://raw.githubusercontent.com/cellarspec/furutoku/main';
 
@@ -159,28 +163,18 @@ async function postCarousel(post, igUserId, token) {
 }
 
 async function refreshToken(token) {
-  const appId = process.env.FB_APP_ID;
-  const appSecret = process.env.FB_APP_SECRET;
-  if (!appId || !appSecret) {
-    console.error(
-      'REFRESH には FB_APP_ID / FB_APP_SECRET が必要です。' +
-        '無期限のページアクセストークンで運用している場合、リフレッシュは不要です(SETUP.md参照)。',
-    );
-    process.exitCode = 1;
-    return;
-  }
-  const res = await apiCall('GET', '/oauth/access_token', {
-    grant_type: 'fb_exchange_token',
-    client_id: appId,
-    client_secret: appSecret,
-    fb_exchange_token: token,
+  // Instagramログイン方式の長期トークン(60日)は ig_refresh_token で延長する。
+  // アプリシークレット不要。Threadsのリフレッシュと同じ仕組み。
+  const res = await apiCall('GET', '/refresh_access_token', {
+    grant_type: 'ig_refresh_token',
+    access_token: token,
   });
   if (!res.ok || !res.data?.access_token) {
     console.error(`トークンリフレッシュ失敗: status=${res.status} body=${res.bodyText}`);
     process.exitCode = 1;
     return;
   }
-  const days = res.data.expires_in ? Math.round(res.data.expires_in / 86400) : '(無期限?)';
+  const days = res.data.expires_in ? Math.round(res.data.expires_in / 86400) : '(不明)';
   console.log(`トークンリフレッシュ成功 (有効期限 ≒ ${days}日)`);
   console.log(`NEW_TOKEN=${res.data.access_token}`);
 }
@@ -233,14 +227,20 @@ async function main() {
     return;
   }
 
-  // トークン・アカウントの疎通確認
-  const me = await apiCall('GET', `/${igUserId}`, { fields: 'username', access_token: token });
+  // トークン・アカウントの疎通確認(Instagramログイン方式は /me で確認できる)
+  const me = await apiCall('GET', '/me', { fields: 'user_id,username', access_token: token });
   if (!me.ok || !me.data?.username) {
     console.error(`アカウント確認失敗: status=${me.status} body=${me.bodyText}`);
     process.exitCode = 1;
     return;
   }
-  console.log(`Instagramアカウント確認: @${me.data.username} (id=${igUserId})`);
+  console.log(`Instagramアカウント確認: @${me.data.username} (user_id=${me.data.user_id})`);
+  if (me.data.user_id && String(me.data.user_id) !== String(igUserId)) {
+    console.warn(
+      `⚠ IG_USER_ID(${igUserId}) と /me の user_id(${me.data.user_id}) が一致しません。` +
+        ` /me の user_id を IG_USER_ID に設定してください。`,
+    );
+  }
 
   const result = await postCarousel(post, igUserId, token);
   if (!result.ok) {

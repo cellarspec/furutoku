@@ -30,6 +30,19 @@ jobs:
           node-version: 24
           cache: npm
 
+      # secrets は if 条件で直接参照できないため、env に写して有無を出力する
+      - name: クレデンシャル有無を判定
+        id: creds
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+        run: |
+          if [ -n "$IG_TOKEN" ] && [ -n "$IG_USER_ID" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 依存インストール
         run: npm ci
 
@@ -57,18 +70,18 @@ jobs:
           fi
 
       - name: Instagramに投稿
-        if: ${{ secrets.IG_TOKEN != '' && secrets.IG_USER_ID != '' }}
+        if: ${{ steps.creds.outputs.configured == 'true' }}
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
         run: node scripts/post-instagram.mjs
 
       - name: セットアップ未完了の通知
-        if: ${{ secrets.IG_TOKEN == '' || secrets.IG_USER_ID == '' }}
+        if: ${{ steps.creds.outputs.configured != 'true' }}
         run: echo "::notice::IG_TOKEN / IG_USER_ID が未設定のため投稿をスキップしました(SETUP.md参照)"
 
       - name: queueの消化をコミット&push
-        if: ${{ secrets.IG_TOKEN != '' && secrets.IG_USER_ID != '' }}
+        if: ${{ steps.creds.outputs.configured == 'true' }}
         run: |
           git config user.name "furutoku-bot"
           git config user.email "actions@github.com"
@@ -87,27 +100,20 @@ jobs:
             echo "queue変更なし(投稿スキップまたは失敗)"
           fi
 
-      # 毎週日曜のみ: 長期ユーザートークンをリフレッシュし、GH_PATがあれば
-      # シークレットを自動更新する。無期限ページトークン運用(SETUP.md推奨)の場合は
-      # FB_APP_ID/FB_APP_SECRET を設定しなければこのステップは何もしない。
+      # 毎週日曜のみ: 長期トークン(60日)を ig_refresh_token で延長し、GH_PATが
+      # あればシークレットを自動更新する。アプリシークレットは不要(Threadsと同じ方式)。
       - name: トークンリフレッシュ(日曜のみ)
-        if: ${{ always() && secrets.IG_TOKEN != '' }}
+        if: ${{ always() && steps.creds.outputs.configured == 'true' }}
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
-          FB_APP_ID: ${{ secrets.FB_APP_ID }}
-          FB_APP_SECRET: ${{ secrets.FB_APP_SECRET }}
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           if [ "$(date -u +%u)" != "7" ]; then
             echo "今日は日曜ではないためリフレッシュをスキップ"
             exit 0
           fi
-          if [ -z "$FB_APP_ID" ] || [ -z "$FB_APP_SECRET" ]; then
-            echo "FB_APP_ID/FB_APP_SECRET 未設定 — 無期限ページトークン運用とみなしスキップ"
-            exit 0
-          fi
           if [ -z "$GH_PAT" ]; then
-            echo "::warning::GH_PAT が未設定のため IG_TOKEN の自動更新はできません。長期ユーザートークンは約60日で失効します(SETUP.md参照)。"
+            echo "::warning::GH_PAT が未設定のため IG_TOKEN の自動更新はできません。長期トークンは約60日で失効します(SETUP.md参照)。"
             exit 0
           fi
           OUTPUT=$(REFRESH=1 node scripts/post-instagram.mjs)
