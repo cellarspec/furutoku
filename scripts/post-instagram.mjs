@@ -19,6 +19,7 @@
 //   DRY_RUN=1        API呼び出しせず、queue先頭の投稿内容と画像URLの検証のみ(トークン不要)
 //   REFRESH=1        投稿せず長期トークン(60日)を更新して `NEW_TOKEN=...` を出力
 //                    (Instagramログイン方式は ig_refresh_token。アプリシークレット不要)
+//   FORCE=1          直近投稿済みガード(6時間)を無視して投稿する
 //
 // 前提: 「Instagram API with Instagram Login」方式(Facebookページ不要)。
 //       IG_TOKEN は Instagramユーザーの長期アクセストークン、IG_USER_ID は /me の user_id。
@@ -56,6 +57,22 @@ async function apiCall(method, path, params) {
 function loadQueueFiles() {
   if (!existsSync(QUEUE_DIR)) return [];
   return readdirSync(QUEUE_DIR).filter((f) => f.endsWith('.json')).sort();
+}
+
+// cron遅延中の手動実行と遅れて届いたcronが重なって同一スロットで二重投稿しないためのガード
+const GUARD_HOURS = 6;
+function recentlyPostedFile() {
+  if (!existsSync(POSTED_DIR)) return null;
+  const cutoff = Date.now() - GUARD_HOURS * 60 * 60 * 1000;
+  for (const f of readdirSync(POSTED_DIR).filter((f) => f.endsWith('.json'))) {
+    try {
+      const { posted_at } = JSON.parse(readFileSync(join(POSTED_DIR, f), 'utf-8'));
+      if (posted_at && new Date(posted_at).getTime() > cutoff) return f;
+    } catch {
+      /* 壊れたJSONはガード判定から除外 */
+    }
+  }
+  return null;
 }
 
 function imageUrls(post) {
@@ -196,6 +213,14 @@ async function main() {
     }
     await refreshToken(token);
     return;
+  }
+
+  if (!dryRun && process.env.FORCE !== '1') {
+    const dup = recentlyPostedFile();
+    if (dup) {
+      console.log(`直近${GUARD_HOURS}時間以内に投稿済みです(${dup})。スキップします。FORCE=1 で強制投稿できます。`);
+      return;
+    }
   }
 
   const files = loadQueueFiles();
