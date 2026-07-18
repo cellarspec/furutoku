@@ -1,4 +1,4 @@
-# Instagram カルーセル自動投稿(毎日12:00 JST)+ 週1トークンリフレッシュ
+# Instagram カルーセル自動投稿(毎日12:23 JST)+ 週1トークンリフレッシュ
 #
 # 順序が重要: Metaは image_url(raw.githubusercontent.com)から画像を取得するため、
 # レンダリング画像を main に push してから投稿する。
@@ -7,7 +7,8 @@ name: Instagram
 
 on:
   schedule:
-    - cron: '0 3 * * *' # 03:00 UTC = 12:00 JST
+    # 毎時0分ちょうどはGitHub側の混雑で遅延・欠落しやすいため23分にずらしている
+    - cron: '23 3 * * *' # 03:23 UTC = 12:23 JST
   workflow_dispatch:
 
 concurrency:
