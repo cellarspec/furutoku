@@ -110,6 +110,91 @@ async function verifyImages(post, { checkRemote }) {
 // ---------------------------------------------------------------------------
 // Instagram Graph API
 // ---------------------------------------------------------------------------
+
+// リトライ設定。
+// 2026-07-20 12:04 JSTの障害: raw.githubusercontent.com からの画像取得にMetaの
+// フェッチャーが一時的に失敗し(code=9004)、3枚目のitem container作成が落ちて
+// カルーセル投稿全体が失敗した(画像自体は01/02と形式上区別がつかず正常)。
+// 既定3回試行(初回+リトライ2回)。IG_MAX_ATTEMPTSで上書き可能。
+const MAX_ATTEMPTS = (() => {
+  const n = Number(process.env.IG_MAX_ATTEMPTS);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 3;
+})();
+
+// 待機は20秒→60秒の指数バックオフ(倍率3)。rawの短時間連続アクセス制限からの
+// 回復と、Metaのフェッチャー側の再試行間隔を見込んだ値。±20%のゆらぎを入れて
+// 複数投稿ジョブが同時にリトライして再度輻輳するのを避ける。
+const RETRY_BASE_DELAY_MS = 20000;
+const RETRY_BACKOFF_FACTOR = 3;
+function backoffDelayMs(attempt) {
+  const base = RETRY_BASE_DELAY_MS * RETRY_BACKOFF_FACTOR ** (attempt - 1);
+  const jitter = base * (Math.random() * 0.4 - 0.2); // ±20%
+  return Math.round(base + jitter);
+}
+
+/**
+ * Meta API のエラーが一時障害とみなしてリトライすべきかを判定する。
+ * result: apiCall() の返り値と同じ形({ status, data })。
+ *
+ * リトライする:
+ *   - code 9004 (media download failed。今回の障害。error_subcode 2207052)
+ *   - code 1 / 2 (Metaの一時的な内部エラー)
+ *   - code 24 / 9007 / is_transient===true (publish時の一時エラー。従来の
+ *     publish個別リトライ―Threadsの「Media Not Found」対策と同じ―を踏襲)
+ *   - HTTP 429 (レート制限)
+ *   - HTTP 5xx
+ * リトライしない:
+ *   - code 190 (トークン無効) / code 200 (権限不足) などの認証・権限系
+ *   - 上記以外の4xx(恒久的な失敗とみなす)
+ */
+export function isRetryableError({ status, data } = {}) {
+  const code = data?.error?.code;
+  if (code === 190 || code === 200) return false;
+  if (
+    code === 9004 ||
+    code === 1 ||
+    code === 2 ||
+    code === 24 ||
+    code === 9007 ||
+    data?.error?.is_transient === true
+  ) {
+    return true;
+  }
+  if (status === 429) return true;
+  if (typeof status === 'number' && status >= 500) return true;
+  return false;
+}
+
+/**
+ * fn(apiCall呼び出し)をリトライ付きで実行する。一時障害(isRetryableError)や
+ * ネットワーク例外(fetch自体のthrow)はバックオフしながら再試行し、
+ * 恒久的な失敗は即座に結果を返す。label はログ表示用(例: "item container 3枚目")。
+ */
+async function callWithRetry(fn, label) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let result;
+    try {
+      result = await fn();
+    } catch (err) {
+      if (attempt === MAX_ATTEMPTS) throw err;
+      const delay = backoffDelayMs(attempt);
+      console.log(
+        `${label} 失敗 (network error): ${err.message}: ${Math.round(delay / 1000)}秒後に再試行します (${attempt + 1}/${MAX_ATTEMPTS}回目)`,
+      );
+      await sleep(delay);
+      continue;
+    }
+    if (result.ok) return result;
+    if (attempt === MAX_ATTEMPTS || !isRetryableError(result)) return result;
+    const code = result.data?.error?.code ?? '-';
+    const delay = backoffDelayMs(attempt);
+    console.log(
+      `${label} 失敗 (code=${code}): ${Math.round(delay / 1000)}秒後に再試行します (${attempt + 1}/${MAX_ATTEMPTS}回目)`,
+    );
+    await sleep(delay);
+  }
+}
+
 async function waitForContainer(creationId, token, { tries = 20, intervalMs = 10000 } = {}) {
   for (let i = 0; i < tries; i++) {
     const st = await apiCall('GET', `/${creationId}`, {
@@ -130,14 +215,18 @@ async function waitForContainer(creationId, token, { tries = 20, intervalMs = 10
 async function postCarousel(post, igUserId, token) {
   const urls = imageUrls(post);
 
-  // ① 画像ごとに item container を作成
+  // ① 画像ごとに item container を作成(一時障害はリトライ。2026-07-20の障害はここ)
   const children = [];
   for (const [i, url] of urls.entries()) {
-    const item = await apiCall('POST', `/${igUserId}/media`, {
-      image_url: url,
-      is_carousel_item: 'true',
-      access_token: token,
-    });
+    const item = await callWithRetry(
+      () =>
+        apiCall('POST', `/${igUserId}/media`, {
+          image_url: url,
+          is_carousel_item: 'true',
+          access_token: token,
+        }),
+      `item container ${i + 1}枚目`,
+    );
     if (!item.ok || !item.data?.id) {
       return { ok: false, step: `item-container(${i + 1}枚目)`, bodyText: item.bodyText, status: item.status };
     }
@@ -145,13 +234,17 @@ async function postCarousel(post, igUserId, token) {
     console.log(`item container 作成 ${i + 1}/${urls.length}: ${item.data.id}`);
   }
 
-  // ② カルーセルコンテナ作成
-  const carousel = await apiCall('POST', `/${igUserId}/media`, {
-    media_type: 'CAROUSEL',
-    children: children.join(','),
-    caption: buildCaption(post),
-    access_token: token,
-  });
+  // ② カルーセルコンテナ作成(一時障害はリトライ)
+  const carousel = await callWithRetry(
+    () =>
+      apiCall('POST', `/${igUserId}/media`, {
+        media_type: 'CAROUSEL',
+        children: children.join(','),
+        caption: buildCaption(post),
+        access_token: token,
+      }),
+    'カルーセルコンテナ作成',
+  );
   if (!carousel.ok || !carousel.data?.id) {
     return { ok: false, step: 'carousel-container', bodyText: carousel.bodyText, status: carousel.status };
   }
@@ -162,20 +255,16 @@ async function postCarousel(post, igUserId, token) {
   const waited = await waitForContainer(creationId, token);
   if (!waited.ok) return { ok: false, step: 'container-status', bodyText: waited.reason };
 
-  // ④ publish(一時エラーはリトライ — Threadsでの「Media Not Found」対策と同じ)
-  let publish;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    publish = await apiCall('POST', `/${igUserId}/media_publish`, {
-      creation_id: creationId,
-      access_token: token,
-    });
-    if (publish.ok && publish.data?.id) return { ok: true, postId: publish.data.id };
-    const e = publish.data?.error;
-    const retryable = e?.code === 24 || e?.is_transient === true || e?.code === 9007 || publish.status >= 500;
-    if (!retryable) break;
-    console.log(`公開リトライ (${attempt}/3): ${e?.message ?? `HTTP ${publish.status}`} — 10秒待機`);
-    await sleep(10000);
-  }
+  // ④ publish(一時エラーはリトライ)
+  const publish = await callWithRetry(
+    () =>
+      apiCall('POST', `/${igUserId}/media_publish`, {
+        creation_id: creationId,
+        access_token: token,
+      }),
+    'publish',
+  );
+  if (publish.ok && publish.data?.id) return { ok: true, postId: publish.data.id };
   return { ok: false, step: 'publish', bodyText: publish.bodyText, status: publish.status };
 }
 
