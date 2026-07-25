@@ -1,0 +1,79 @@
+{
+  "slug": "tetsuzuki-yokuaru-shippai",
+  "title": "ふるさと納税でやりがちな手続きミス4つ",
+  "caption": "せっかく寄付するなら、手続きで損したくないですよね🙋\n\n・上限額を超えて寄付…超えた分は自己負担に\n・ワンストップの申請期限は翌年1月10日必着\n・6自治体以上に寄付するとワンストップは対象外に\n・申請後に確定申告もすると、その申請は無効に\n\nどれも「知っていれば防げる」ミスです。寄付する前に一度チェックしてみてください。\n\n※制度の詳細は総務省ふるさと納税ポータルをご確認ください。",
+  "hashtags": [
+    "#ふるさと納税",
+    "#ふるさと納税初心者",
+    "#ふるさと納税デビュー",
+    "#ワンストップ特例",
+    "#節約",
+    "#節約主婦",
+    "#家計管理",
+    "#家計簿",
+    "#お金の勉強",
+    "#暮らしの知恵",
+    "#主婦の勉強垢"
+  ],
+  "affiliate": false,
+  "sources": [
+    "https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/furusato/mechanism/deduction.html",
+    "https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/furusato/mechanism/procedure.html",
+    "https://www.satofull.jp/static/onestop.php"
+  ],
+  "slides": [
+    {
+      "type": "cover",
+      "kicker": "知らないと損するかも",
+      "icon": "alert",
+      "title": "やりがちな\n手続きミス4つ",
+      "sub": "上限超過や申請忘れ…よくある失敗を先にチェック"
+    },
+    {
+      "type": "list",
+      "heading": "まず知っておきたい2つ",
+      "icon": "alert",
+      "items": [
+        {
+          "title": "上限額を超えて寄付",
+          "icon": "alert",
+          "body": "上限を超えた分は控除の対象外になり、自己負担が増えてしまいます"
+        },
+        {
+          "title": "申請期限を過ぎる",
+          "icon": "calendar",
+          "body": "ワンストップ特例の申請は翌年1月10日必着。年末の寄付は郵送が間に合わないことも"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "heading": "見落としやすい2つ",
+      "icon": "check",
+      "items": [
+        {
+          "title": "6自治体以上に寄付",
+          "icon": "pin",
+          "body": "6自治体を超えると、ワンストップ特例は使えず確定申告への切り替えが必要です"
+        },
+        {
+          "title": "申請後に確定申告もする",
+          "icon": "document",
+          "body": "ワンストップを申請しても、同じ年に確定申告をすると申請は無効になります"
+        }
+      ]
+    },
+    {
+      "type": "note",
+      "heading": "覚えておきたい基本",
+      "icon": "check",
+      "body": "手続きの失敗は\n事前のひと手間で\n防げます",
+      "footnote": "上限額の目安や申請期限は、寄付前に必ず確認しておきましょう。"
+    },
+    {
+      "type": "cta",
+      "title": "手続きの流れは\nプロフィールから",
+      "body": "上限額の目安やワンストップ特例の手順は、プロフィールのリンクから確認できます"
+    }
+  ]
+}
