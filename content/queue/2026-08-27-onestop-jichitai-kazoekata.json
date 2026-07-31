@@ -1,0 +1,64 @@
+{
+  "slug": "onestop-jichitai-kazoekata",
+  "title": "ワンストップ特例、自治体の数え方",
+  "caption": "「ワンストップ特例は5自治体まで」ってよく聞くけど、これって寄付の回数?それとも自治体の数?🤔\n\n正解は「自治体の数」です。同じ自治体に何度寄付しても、自治体としては1団体分としてカウントされます。\n\nただし申請書は寄付のたびに1枚ずつ提出が必要なので、そこはうっかり忘れないように気をつけましょう。\n\n寄付先が6自治体以上になった年は、ワンストップ特例が使えず確定申告への切り替えが必要です。\n\n保存して手続きの時に見返してくださいね📝\n\n※制度の詳細は総務省ふるさと納税ポータルをご確認ください。",
+  "hashtags": [
+    "#ふるさと納税",
+    "#ふるさと納税初心者",
+    "#ふるさと納税デビュー",
+    "#ワンストップ特例",
+    "#ワンストップ特例制度",
+    "#節約",
+    "#節約主婦",
+    "#家計管理",
+    "#家計簿",
+    "#お金の勉強",
+    "#暮らしの知恵",
+    "#主婦の勉強垢"
+  ],
+  "affiliate": false,
+  "sources": [
+    "https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/furusato/mechanism/procedure.html",
+    "https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/furusato/mechanism/deduction.html"
+  ],
+  "slides": [
+    {
+      "type": "cover",
+      "kicker": "自治体の数え方",
+      "icon": "document",
+      "title": "同じ自治体に\n何度寄付しても",
+      "sub": "ワンストップ特例の「5自治体」の数え方"
+    },
+    {
+      "type": "stat",
+      "heading": "ワンストップ特例の条件",
+      "icon": "check",
+      "stats": [
+        { "value": "5自治体", "label": "まで申請できる" }
+      ],
+      "note": "自治体の「数」でカウントします。寄付の回数ではありません"
+    },
+    {
+      "type": "list",
+      "heading": "数え方のポイント",
+      "icon": "bulb",
+      "items": [
+        { "title": "同じ自治体なら1件", "icon": "check", "body": "同じ自治体に3回寄付しても、自治体数としては1団体分のカウントです" },
+        { "title": "申請書は寄付ごとに必要", "icon": "document", "body": "自治体数は1でも、申請書は寄付するたびに1枚ずつ提出します" },
+        { "title": "6自治体目からは対象外", "icon": "alert", "body": "寄付先が6自治体以上になった年は、ワンストップ特例が使えなくなります" }
+      ]
+    },
+    {
+      "type": "note",
+      "heading": "覚えておきたいこと",
+      "icon": "alert",
+      "body": "数えるのは\n自治体の数\n寄付の回数ではない",
+      "footnote": "申請書の提出はうっかり忘れやすいので、寄付のたびに手続きしましょう"
+    },
+    {
+      "type": "cta",
+      "title": "手続きの流れも\nおさらいしよう",
+      "body": "ワンストップ特例や確定申告の手順は、プロフィールのリンクから確認できます"
+    }
+  ]
+}
